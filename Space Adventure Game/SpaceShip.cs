@@ -96,5 +96,9 @@ namespace Space_Adventure_Game
             }
             return totalCargoWeight;
         }
+        public override string ToString()
+        {
+            return $"SpaceShip: {Name}, Location: {Location.Name}, Fuel: {Fuel} units, Cargo Capacity: {CargoCapacity} tons";
+        }
     }
 }

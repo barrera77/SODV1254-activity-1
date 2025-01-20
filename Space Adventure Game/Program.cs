@@ -15,8 +15,8 @@ namespace Space_Adventure_Game
 
             IntroScreen();            
 
-            //MainScreen();
-            //Console.ReadLine();
+            MainScreen();
+            Console.ReadLine();
         }
 
 
@@ -28,25 +28,36 @@ namespace Space_Adventure_Game
         /// </summary>
         static void MainScreen()
         {
+            Console.Clear();
             PrintScreenHeader();            
 
             //Print ships menu list
-            Console.WriteLine("\n");
+            Console.WriteLine("\n\n");
             for (int i = 0; i < shipsList.Count; i++)
             {
                 Console.WriteLine($"{i + 1}.- {shipsList[i].Name}");
             }
 
-            int option = ValidateOption("\nChoose your Spaceship: ", 1, shipsList.Count);
+            int shipOption = ValidateOption("\nChoose your Spaceship: ", 1, shipsList.Count);
 
             Console.Clear();
             PrintScreenHeader();
 
-            Console.WriteLine($"Hello {shipsList[option-1].Name}");
+            Console.WriteLine($"\nHello {shipsList[shipOption-1].Name} your current location is {shipsList[shipOption - 1].Location.Name}");
+            
+            //Print ships menu list
+            Console.WriteLine("\n");
+            for (int i = 0; i < shipsList.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}.- {planetsList[i].Name}");
+            }
+
+            int destinationOption = ValidateOption("\nChoose your destination: ", 1, planetsList.Count);
 
 
 
-        }        
+
+        }
 
         static void IntroScreen()
         {
@@ -181,11 +192,8 @@ namespace Space_Adventure_Game
         {
             //Print screen header
             Console.ForegroundColor = ConsoleColor.Green;
-            PrintCentered("*****Welcome to Space Adventure Game****");
-            Console.ResetColor();
-
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            PrintCentered("Get ready for an intergalactic adventure!");
+            Console.WriteLine("\n");
+            PrintCentered("***** Space Adventure Game ****");
             Console.ResetColor();
         }
         #endregion

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Space_Adventure_Game
 {
+       
     internal class Planet
     {
         public string Name { get; set; }

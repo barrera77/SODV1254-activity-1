@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ConsoleTables;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Space_Adventure_Game
     internal class Planet
     {
         public string Name { get; set; }
-        public List<Cargo> AvailableCargo { get; private set; }
+        public Dictionary<Cargo, int> AvailableCargo { get; private set; }
         public bool RefuelingStation { get; set; }
 
         //Constructor
@@ -18,34 +19,70 @@ namespace Space_Adventure_Game
         {
             Name = name;
             RefuelingStation = refuelingStation;
-            AvailableCargo = new List<Cargo>();
+            AvailableCargo = new Dictionary<Cargo, int>();
         }
 
-        public void AddCargo(Cargo item)
+        /// <summary>
+        /// Add Cargo items to the avilable cargo inventory
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="itemQty"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public void AddCargo(Cargo item, int itemQty)
         {
             if (item == null)
             {
                 throw new ArgumentNullException(nameof(item), "Cargo item cannot be null");
+            }
+            if(itemQty <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(itemQty), "Quantity must be greater than 0");
+            }
+
+            if(AvailableCargo.ContainsKey(item))
+            {
+                //If item exists add teh quantity
+                AvailableCargo[item] += itemQty;    
             }
             else
             {
-                AvailableCargo.Add(item);
+                //if item does not exist add new iyem with quantity
+                AvailableCargo[item] = itemQty;
             }
         }
 
-        public void RemoveCargo(Cargo item)
+        /// <summary>
+        /// Remove either items from teh inventory or just subtract quantities
+        /// </summary>
+        /// <param name="item"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public void RemoveCargo(Cargo item, int itemQty)
         {
             if (item == null)
             {
                 throw new ArgumentNullException(nameof(item), "Cargo item cannot be null");
             }
-            if (!AvailableCargo.Contains(item))
+            if (!AvailableCargo.ContainsKey(item))
             {
                 throw new InvalidOperationException("Item Doenst Exist");
             }
-            else
+            if (itemQty <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(itemQty), "Quantity must be greater than 0");
+            }
+            if (AvailableCargo[item] < itemQty)
+            {
+                throw new InvalidOperationException("Not enough items qty to remove");
+            }            
+            if (AvailableCargo[item] == 0)
             {
                 AvailableCargo.Remove(item);
+            }
+            else
+            {
+                AvailableCargo[item] -= itemQty;
             }
         }
 
@@ -68,6 +105,25 @@ namespace Space_Adventure_Game
                 spaceShip.Fuel += amount;
             }
 
+        }
+
+        /// <summary>
+        /// Display the current inventory in the planet
+        /// </summary>
+        public void DisplayAvailableCargo()
+        {
+            Console.WriteLine($"Available Cargo:");
+
+            var table = new ConsoleTable("Item", "Quantity");
+
+            foreach (var item in AvailableCargo)
+            {
+                table.AddRow(item.Key.Name, item.Value + " units");
+            }
+
+            Console.WriteLine(Name);
+            table.Write();
+            Console.WriteLine();
         }
 
         public override string ToString()

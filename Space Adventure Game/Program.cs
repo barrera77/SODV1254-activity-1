@@ -1,5 +1,6 @@
 ﻿using ConsoleTables;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Space_Adventure_Game
@@ -37,7 +38,7 @@ namespace Space_Adventure_Game
                 new Planet("Earth", true),
                 new Planet("Mars", false),
                 new Planet("Neptune", true),
-                new Planet("Jupiter", false)
+                new Planet("Jupiter", true)
             };
 
             cargoItemsList = new List<Cargo>()
@@ -53,7 +54,7 @@ namespace Space_Adventure_Game
             {
                 new SpaceShip("Explorer", 60, 150, 1200, planetsList[0]),
                 new SpaceShip("Voyager", 45, 200, 1050, planetsList[2]),
-                new SpaceShip("Combatant", 35, 100, 900, planetsList[1]),
+                new SpaceShip("Combatant", 100, 100, 900, planetsList[1]),
                 new SpaceShip("Pioneer", 40, 150, 1000, planetsList[3]),
             };
 
@@ -73,20 +74,23 @@ namespace Space_Adventure_Game
                 { ("Neptune", "Mars"), (500, 1.2, 1.8) }
             };
 
-            //Create cargo lists for each planet
-            Random random = new Random();
+            //Create cargo quantity for the items
+            Random random = new Random();          
 
             foreach (var planet in planetsList)
-            {
-                //Shufle the items
-                var shuffledCargoItems = cargoItemsList.OrderBy(x => x.Name).ToList();
-
-                //Assign random items to the planets
-                int cargoCount = random.Next(3, 5);
-
-                foreach (var item in shuffledCargoItems.Take(cargoCount))
+            {          
+                foreach (var item in cargoItemsList)
                 {
-                    planet.AddCargo(item);
+                    //Assign random number of items to the planets
+                    int cargoCount = random.Next(9, 15);
+
+                    //if the planet is Mars the fuel stock should 0 since there is no fuel station                    
+                    if(planet.Name == "Mars" && item.Name == "Fuel Tank")
+                    {
+                        continue;
+                    }
+                    planet.AddCargo(new Cargo(item.Name, item.Weight), cargoCount);
+
                 }
             }
         }
@@ -415,12 +419,18 @@ namespace Space_Adventure_Game
                 switch (selectedOption)
                 {
                     case 1:
-                        LoadFuel(start, destinationOption);
+                        if(!shipsList[start - 1].Location.RefuelingStation)
+                        {
+                            Console.Write($"\nSorry! {shipsList[start - 1].Location.Name} does not have fuel station or fuel supplies. Press any key to continue...");
+                            Console.ReadKey();                            
+                            break;
+                        }
+                        GoToFuelStation(start, destinationOption);
 
                         break;
 
                     case 2:
-                        
+                        GoToSuppliesStore(start, destinationOption);
 
                         break;
 
@@ -446,7 +456,7 @@ namespace Space_Adventure_Game
 
         }
 
-        static void LoadFuel(int start, int destinationOption)
+        static void GoToFuelStation(int start, int destinationOption)
         {
             bool isPlaying = true;
 
@@ -475,7 +485,7 @@ namespace Space_Adventure_Game
                 var table = new ConsoleTable(columnNames);
 
                 Console.WriteLine("\n");
-                PrintCentered("F U E L  S T A T I O N\n");
+                PrintCentered($"{currentLocation.ToUpper()} - F U E L  S T A T I O N\n");
                 
                 table.AddRow(fuelLvl, maxFuelLvl, $"{requiredFuel}");                                
              
@@ -486,18 +496,23 @@ namespace Space_Adventure_Game
                 Console.ReadKey();
 
                 Console.WriteLine("\n");
-                FillTank(fuelLvl, maxFuelLvl, requiredFuel);
+                GetFuel(fuelLvl, maxFuelLvl, requiredFuel, start -1);
+                return;
+
+                
 
             }         
         }
 
-        static void FillTank(int currentLevel, int maxLevel, int requiredFuel)
-        {
+        static void GetFuel(int currentLevel, int maxLevel, int requiredFuel, int ship)
+        {            
+            int loadedFuel = 0; 
+
             int totalFuelToLoad = Math.Min(requiredFuel, maxLevel - currentLevel); 
             int steps = 50; 
             double fuelPerStep = (double)totalFuelToLoad / steps;
             int initialProgress = (int)((currentLevel * steps) / maxLevel);
-
+                        
             // Calculate padding to center the bar
             int consoleWidth = Console.WindowWidth;
             int progressBarWidth = steps + 8; 
@@ -529,14 +544,22 @@ namespace Space_Adventure_Game
 
                 Thread.Sleep(200); 
             }
-                       
 
             Console.ResetColor();
+
+            //add the loaded fuel to the current ship
+            Console.WriteLine("\n");
+            PrintCentered("Loading complete.");
+            Console.WriteLine("\n");
+            loadedFuel = maxLevel - currentLevel;            
+            shipsList[ship].Refuel(loadedFuel);
+
+
+            
             int remainingFuel = requiredFuel - maxLevel;
             if (remainingFuel > 0)
-            {
-                Console.WriteLine("\n");
-                PrintCentered($"Loading complete. The remaining {remainingFuel} units of fuel can be bought at the supplies store.");
+            {                
+               Console.WriteLine($"The remaining {remainingFuel} units of can be bought at the supplies store.");
             }
             else
             {
@@ -548,6 +571,32 @@ namespace Space_Adventure_Game
             Console.ReadKey();
         }
 
+
+        static void GoToSuppliesStore(int start, int destinationOption)
+        {
+            bool isPlaying = true;
+
+            while (isPlaying)
+            {
+                string currentLocation = shipsList[start - 1].Location.Name;
+                string destination = planetsList[destinationOption - 1].Name;
+
+                int planetIndex = planetsList.FindIndex(x => x.Name == currentLocation);
+
+               
+                Console.Clear();
+                PrintScreenHeader();
+
+                Console.WriteLine("\n");
+                PrintCentered($"{currentLocation.ToUpper()} - S U P P L I E S\n");
+
+                Console.WriteLine("\n");
+                planetsList[planetIndex].DisplayAvailableCargo();
+
+                Console.ReadLine();
+
+            }
+        }
 
 
         #endregion 
@@ -573,8 +622,7 @@ namespace Space_Adventure_Game
         static void PrintScreenHeader()
         {
             //Print screen header
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n");
+            Console.ForegroundColor = ConsoleColor.Green;          
             PrintCentered("***** Space Adventure Game ****");
             Console.ResetColor();
         }

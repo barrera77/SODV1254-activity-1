@@ -9,7 +9,8 @@ namespace Space_Adventure_Game
     internal class SpaceShip
     {
         public string Name { get; set; }
-        public double Fuel {  get; set; }
+        public int Fuel {  get; set; }
+        public int MaxFuelCapacity { get; private set; }
         public double CargoCapacity { get; private set; }
         public List<Cargo> CargoList { get; private set; }
         public Planet Location { get; private set; }
@@ -28,15 +29,22 @@ namespace Space_Adventure_Game
             Location = destination;
         }
 
-        public void Refuel(double amount)
+        public void Refuel(int amount)
         {
             if(amount <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(amount), "Fuel amount must be greater than 0");
             }
+            if(Fuel + amount > MaxFuelCapacity)
+            {
+                Fuel = MaxFuelCapacity;
+                Console.Write($"{Name} has been refueled by {amount} units. Current fuel: {Fuel} units.");
+
+            }
             else
             {
                 Fuel += amount;
+                Console.WriteLine($"{Name} has been refueled by {amount} units. Current fuel: {Fuel} units.");
             }
         }
 
@@ -76,10 +84,11 @@ namespace Space_Adventure_Game
         }
 
         //Constructor
-        public SpaceShip(string name, double fuel, double cargoCapacity, Planet initialLocation)
+        public SpaceShip(string name, int fuel, int maxFuelCapacity, double cargoCapacity, Planet initialLocation)
         {
             Name = name;
             Fuel = fuel;
+            MaxFuelCapacity = maxFuelCapacity;
             CargoCapacity = cargoCapacity;
             CargoList = new List<Cargo>();
             Location = initialLocation;
@@ -98,7 +107,7 @@ namespace Space_Adventure_Game
         }
         public override string ToString()
         {
-            return $"SpaceShip: {Name}, Location: {Location.Name}, Fuel: {Fuel} units, Cargo Capacity: {CargoCapacity} tons";
+            return $"SpaceShip: {Name}, Location: {Location.Name}, Fuel: {Fuel}/{MaxFuelCapacity} units, Cargo Capacity: {CargoCapacity} tons";
         }
     }
 }

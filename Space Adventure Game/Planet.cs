@@ -49,7 +49,7 @@ namespace Space_Adventure_Game
             }
         }
 
-        public void RefuelSpacehip(SpaceShip spaceShip, double amount)
+        public void RefuelSpacehip(SpaceShip spaceShip, int amount)
         {
             if (spaceShip == null)
             {
@@ -68,6 +68,11 @@ namespace Space_Adventure_Game
                 spaceShip.Fuel += amount;
             }
 
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 }

@@ -7,6 +7,9 @@ namespace Space_Adventure_Game
 {
     internal class Program
     {
+        //Control when to stop the teleprompter
+        static bool stopTeleprompter = false;
+
         static List<Planet>? planetsList;
         static List<Cargo>? cargoItemsList;
         static List<SpaceShip>? shipsList;
@@ -590,12 +593,41 @@ namespace Space_Adventure_Game
                 Console.WriteLine("\n");
                 PrintCentered($"{currentLocation.ToUpper()} - S U P P L I E S\n");
 
-                Console.WriteLine("\n");
-                planetsList[planetIndex].DisplayAvailableCargo();
+                string message = " Dear Travlers, please be reminded that currently Mars does not have refueling station or fuel supplies. STACK UP! ";
+                int delay = 150;
 
+                Console.WriteLine("");
+               
+                planetsList[planetIndex].DisplayAvailableCargo();
+                int itemIndex  = ValidateOption("Please chose the item you wish to buy: ", 1, planetsList[planetIndex].AvailableCargo.Count);
+                
+                int maxQty = planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex).Value;
+                int qty = ValidateOption("Please enter the quantity: ", 1, maxQty);
+              
                 Console.ReadLine();
 
             }
+
+        }
+
+        static void CreateTeleprompter(string message, int delay)
+        {
+            // Add padding to create a "teleprompter effect"
+            string paddedMessage = message.PadLeft(message.Length + Console.WindowWidth, ' ')
+                                        .PadRight(message.Length + 2 * Console.WindowWidth, ' ');
+
+            int originalCursorTop = Console.CursorTop;
+
+            // Loop to scroll the message
+            for (int i = 0; i < paddedMessage.Length - Console.WindowWidth; i++)
+            {
+                Console.SetCursorPosition(0, originalCursorTop);
+
+                Console.WriteLine(paddedMessage.Substring(i, Console.WindowWidth));
+
+                Thread.Sleep(delay); 
+            }
+            Console.SetCursorPosition(0, originalCursorTop + 1);
         }
 
 
@@ -657,7 +689,7 @@ namespace Space_Adventure_Game
 
                 if (!isValidOption)
                 {
-                    Console.WriteLine("Invalid input. Please enter an option from the menu");
+                    Console.WriteLine($"Invalid input. Please enter a number between {min} and {max}.");
                 }
             }
 

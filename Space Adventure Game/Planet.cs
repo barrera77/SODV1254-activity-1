@@ -116,12 +116,13 @@ namespace Space_Adventure_Game
 
             var table = new ConsoleTable("Item", "Quantity");
 
+            int index = 1;
             foreach (var item in AvailableCargo)
             {
-                table.AddRow(item.Key.Name, item.Value + " units");
+                table.AddRow($"{index}.- " + item.Key.Name, item.Value + " units");
+                index++;
             }
 
-            Console.WriteLine(Name);
             table.Write();
             Console.WriteLine();
         }

@@ -241,8 +241,7 @@ namespace Space_Adventure_Game
                ship.CargoList.Count == 0 ? "Empty" : ship.CargoList.Count,
                ship.Location.Name);
             }
-            table.Write();
-            Console.WriteLine();
+            table.Write(Format.Minimal);           
         }
 
         /// <summary>
@@ -326,9 +325,7 @@ namespace Space_Adventure_Game
                 shipsList[shipOtion - 1].CargoList.Count == 0 ? "Empty" : shipsList[shipOtion - 1].CargoList.Count,
                 shipsList[shipOtion - 1].Location.Name);
 
-            table.Write();
-
-            Console.WriteLine();
+            table.Write(Format.Minimal);            
         }
 
         /// <summary>
@@ -376,9 +373,7 @@ namespace Space_Adventure_Game
                 table.AddRow(start, destination, fuelTanks, medicalCrates, foodCrates);
             }
 
-            table.Write();
-
-            Console.WriteLine();
+            table.Write(Format.Minimal);
         }
 
         /// <summary>
@@ -490,10 +485,9 @@ namespace Space_Adventure_Game
                 Console.WriteLine("\n");
                 PrintCentered($"{currentLocation.ToUpper()} - F U E L  S T A T I O N\n");
                 
-                table.AddRow(fuelLvl, maxFuelLvl, $"{requiredFuel}");                                
-             
-                table.Write();
-                Console.WriteLine();
+                table.AddRow(fuelLvl, maxFuelLvl, $"{requiredFuel}");
+
+                table.Write(Format.Minimal);                
 
                 Console.Write("Press any key to start filling up your tank: ");
                 Console.ReadKey();
@@ -579,6 +573,14 @@ namespace Space_Adventure_Game
         {
             bool isPlaying = true;
 
+            // Teleprompter settings
+            string message = " Dear Travlers, please be reminded that currently Mars does not have refueling station or fuel supplies. If you are heading there . . .STOCK UP! ";
+            int delay = 150;
+
+            // Start the teleprompter in a background thread
+            Thread teleprompterThread = new Thread(() => CreateTeleprompter(message, delay));
+            teleprompterThread.Start();
+
             while (isPlaying)
             {
                 string currentLocation = shipsList[start - 1].Location.Name;
@@ -586,49 +588,100 @@ namespace Space_Adventure_Game
 
                 int planetIndex = planetsList.FindIndex(x => x.Name == currentLocation);
 
-               
-                Console.Clear();
-                PrintScreenHeader();
-
-                Console.WriteLine("\n");
+                // Render the UI
+                Console.Clear();                          
+                PrintStoreHeader();
                 PrintCentered($"{currentLocation.ToUpper()} - S U P P L I E S\n");
 
-                string message = " Dear Travlers, please be reminded that currently Mars does not have refueling station or fuel supplies. STACK UP! ";
-                int delay = 150;
-
-                Console.WriteLine("");
-               
+                // Print the available cargo for the current planet
                 planetsList[planetIndex].DisplayAvailableCargo();
-                int itemIndex  = ValidateOption("Please chose the item you wish to buy: ", 1, planetsList[planetIndex].AvailableCargo.Count);
-                
+
+                int numOfItems = planetsList[planetIndex].AvailableCargo.Count;
+
+                Console.WriteLine($"  {numOfItems + 1 }.- Go back");
+                Console.WriteLine($"  {numOfItems + 2}.- Quit Game");
+
+
+                // Move the cursor to the correct position for user interaction
+                int cursorLine = Console.CursorTop;
+                Console.SetCursorPosition(0, cursorLine);
+
+                // Get the user's item selection
+                int itemIndex = ValidateOption("\nPlease choose the item you wish to buy: ", 1, planetsList[planetIndex].AvailableCargo.Count);
+
+                // Move the cursor again for quantity input
+                cursorLine = Console.CursorTop;
+                Console.SetCursorPosition(0, cursorLine);
+
+                // Get the quantity to buy
                 int maxQty = planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex).Value;
                 int qty = ValidateOption("Please enter the quantity: ", 1, maxQty);
-              
-                Console.ReadLine();
 
+                Console.WriteLine($"You selected {qty} of {planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex).Key}.");
+                Console.WriteLine("Press any key to continue or 'q' to quit.");
+
+                // Ensure the cursor is positioned correctly for input
+                cursorLine = Console.CursorTop;
+                Console.SetCursorPosition(0, cursorLine);
+                string input = Console.ReadLine();
+                if (input.Equals("q", StringComparison.OrdinalIgnoreCase))
+                {
+                    isPlaying = false; // Exit the loop
+                }
             }
 
+            // Stop the teleprompter when the user exits
+            stopTeleprompter = true;
+            teleprompterThread.Join(); // Wait for the teleprompter thread to stop
         }
+   
 
         static void CreateTeleprompter(string message, int delay)
         {
-            // Add padding to create a "teleprompter effect"
+            Console.CursorVisible = true; // Ensure the cursor remains visible
+
+            // Add padding to the message for smooth scrolling
             string paddedMessage = message.PadLeft(message.Length + Console.WindowWidth, ' ')
                                         .PadRight(message.Length + 2 * Console.WindowWidth, ' ');
 
-            int originalCursorTop = Console.CursorTop;
+            int teleprompterLine = 0; // Reserve the first line for the teleprompter
 
-            // Loop to scroll the message
-            for (int i = 0; i < paddedMessage.Length - Console.WindowWidth; i++)
+            while (!stopTeleprompter)
             {
-                Console.SetCursorPosition(0, originalCursorTop);
+                for (int i = 0; i < paddedMessage.Length - Console.WindowWidth && !stopTeleprompter; i++)
+                {
+                    // Save the current cursor position
+                    int currentCursorLeft = Console.CursorLeft;
+                    int currentCursorTop = Console.CursorTop;
 
-                Console.WriteLine(paddedMessage.Substring(i, Console.WindowWidth));
+                    // Display the teleprompter message
+                    Console.SetCursorPosition(0, teleprompterLine);
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Write(paddedMessage.Substring(i, Console.WindowWidth));
+                    Console.ResetColor();
+                    // Restore the cursor position for user operations
+                    Console.SetCursorPosition(currentCursorLeft, currentCursorTop);
 
-                Thread.Sleep(delay); 
+                    Thread.Sleep(delay);
+                }
             }
-            Console.SetCursorPosition(0, originalCursorTop + 1);
+
+            // Clear the teleprompter line
+            Console.SetCursorPosition(0, teleprompterLine);
+            Console.Write(new string(' ', Console.WindowWidth));
+
+            Console.CursorVisible = true; // Restore cursor visibility
         }
+
+
+        static void PrintStoreHeader()
+        {            
+            Console.SetCursorPosition(0, 1);         
+            PrintScreenHeader();
+            Console.Write("\n");
+
+        }
+
 
 
         #endregion 
@@ -654,9 +707,12 @@ namespace Space_Adventure_Game
         static void PrintScreenHeader()
         {
             //Print screen header
-            Console.ForegroundColor = ConsoleColor.Green;          
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("\n");
             PrintCentered("***** Space Adventure Game ****");
+            Console.Write("\n");
             Console.ResetColor();
+            
         }
 
         /// <summary>

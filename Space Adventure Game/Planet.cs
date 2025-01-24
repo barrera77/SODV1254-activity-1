@@ -112,7 +112,7 @@ namespace Space_Adventure_Game
         /// </summary>
         public void DisplayAvailableCargo()
         {
-            Console.WriteLine($"Available Cargo:");
+            Console.WriteLine($"Available Cargo:\n");
 
             var table = new ConsoleTable("Item", "Quantity");
 
@@ -123,8 +123,7 @@ namespace Space_Adventure_Game
                 index++;
             }
 
-            table.Write();
-            Console.WriteLine();
+            table.Write(Format.Minimal);            
         }
 
         public override string ToString()

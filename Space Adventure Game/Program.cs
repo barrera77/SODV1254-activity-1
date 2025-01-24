@@ -14,6 +14,7 @@ namespace Space_Adventure_Game
         static List<Cargo>? cargoItemsList;
         static List<SpaceShip>? shipsList;
         static Dictionary<(string, string), (int fuelUnits, double medicalCrates, double foodCrates)> travelRequirements;
+        static string captainName;
 
         static void Main(string[] args)
         {
@@ -197,9 +198,9 @@ namespace Space_Adventure_Game
                     case int option when option <= shipsList.Count:
                         //Request the name of the player
                         Console.Write("What is the name of the captain (optional): ");
-                        string captainName = Console.ReadLine();
+                        captainName = Console.ReadLine();
 
-                        HandleSelectedShipOption(shipOption, captainName);
+                        HandleSelectedShipOption(shipOption);
 
                         break;
 
@@ -249,7 +250,7 @@ namespace Space_Adventure_Game
         /// </summary>
         /// <param name="shipOption"></param>
         /// <param name="captainName"></param>
-        static void HandleSelectedShipOption(int shipOption, string captainName)
+        static void HandleSelectedShipOption(int shipOption)
         {
             bool isPlaying = true;
 
@@ -722,43 +723,62 @@ namespace Space_Adventure_Game
 
             string initialLocation = shipsList[start -1].Location.Name;
             string Destination = planetsList[destinationOption -1].Name;
+                      
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine();
+            PrintCentered("W A R N I N G");
+            PrintCentered($"Captain {captainName} You don't meet the minimum requirments for the trip from {initialLocation} to {Destination}.");
+            Console.ResetColor();
+            Console.WriteLine("\nI strongly advise to reconsider, we have lost many ships that way.");
+            bool proceed = IsValidResponse("Do you want to at least get enough supplies to make it to the closest station (y/n)?");
 
+            if( !proceed )
+            {
+                bool confirmation = IsValidResponse("Are you sure you want to continue (y/n)? ");
 
-          
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Warning. You don't meet the minimum requirments for the trip from {initialLocation} to {Destination}");
-                Console.ResetColor();
-                Console.Write("Are you sure you want to continue (y/n)? ");
-                string answer = Console.ReadLine();
-
-                if(string.IsNullOrWhiteSpace(answer))
-                {
-                    Console.WriteLine("Answer cannot be null");
-                }
-                if (answer.Trim().ToLower() != "y" || answer.Trim().ToLower() != "n")
-                {
-                    Console.WriteLine("Invalid answer please reply y or n");
-                }
-                if(answer.Trim().ToLower() == "y")
+                if(confirmation)
                 {
                     Console.WriteLine("Please proceed at your own risk. Good Luck!!!");
                     StartTrip(start, destinationOption);
+
                 }
-          
-
-            static void StartTrip(int start, int destination)
-            {
-                Console.Clear();
-                PrintScreenHeader();
-
-                Console.Write("Prepare for launch, please press any key to continue: ");
-                Console.ReadKey();
-
-                LaunchCountdown();
-
-                // Rocket ASCII Art
-                string[] rocketArt = new string[]
+                else
                 {
+                    Console.WriteLine("Great choice! Let's prepare adequately.");                    
+                    return; // Exit this method and allow them to prepare
+                }
+            }
+            else
+            {
+                // If they agree to stock up, guide them to the supplies store
+                Console.Write("Good decision, Captain! Redirecting you to the supplies store...");
+               Console.ReadKey();   
+            }
+
+
+
+
+
+
+
+
+        }
+
+        
+
+        static void StartTrip(int start, int destination)
+        {
+            Console.Clear();
+            PrintScreenHeader();
+
+            Console.Write("Prepare for launch, please press any key to continue: ");
+            Console.ReadKey();
+
+            LaunchCountdown();
+
+            // Rocket ASCII Art
+            string[] rocketArt = 
+            {
                 "       !",
                 "       ^",
                 "      / \\",
@@ -782,12 +802,9 @@ namespace Space_Adventure_Game
                 "      ( )",
                 "       .",
                 "       ."
-                };
+            };
 
-                AnimateRocketCrashInRealTime(rocketArt);
-
-
-            }
+            AnimateRocketCrashInRealTime(rocketArt);
 
 
         }
@@ -837,9 +854,6 @@ namespace Space_Adventure_Game
                 PrintCentered($" {i} seconds...   "); 
                 Thread.Sleep(1000);
             }
-
-           
-
 
             // Final message
             Console.SetCursorPosition(left, top);
@@ -910,6 +924,11 @@ namespace Space_Adventure_Game
         {
             Console.Clear();
 
+            Console.ForegroundColor = ConsoleColor.Red;
+            PrintCentered("Dont say I didnt warn you!");         
+            Thread.Sleep(2000);
+            Console.ResetColor();
+
             int rocketHeight = rocketArt.Length; // Height of the rocket
             int consoleHeight = Console.WindowHeight; // Height of the console window
             int consoleWidth = Console.WindowWidth; // Width of the console window
@@ -918,7 +937,7 @@ namespace Space_Adventure_Game
             Random random = new Random();
 
             // Rocket Ascension Animation
-            for (int y = startY; y >= 0; y--) // Move up until the top
+            for (int y = startY; y >= -rocketHeight / 2; y--) // Allow the rocket to ascend halfway off the screen
             {
                 Console.Clear();
 
@@ -927,22 +946,23 @@ namespace Space_Adventure_Game
                 {
                     int lineY = y + i; // Calculate the line's vertical position
 
-                    if (lineY >= 0 && lineY < consoleHeight) // Print only if the line is within the visible screen
+                    // Print only if the line is within the visible screen
+                    if (lineY >= 0 && lineY < consoleHeight)
                     {
-                        Console.SetCursorPosition(centerX, lineY); // Align the rocket consistently
+                        Console.SetCursorPosition(centerX, lineY); // Align the rocket horizontally
                         Console.WriteLine(rocketArt[i]);
                     }
                 }
 
                 Thread.Sleep(100); // Add delay to simulate smooth animation
 
-                // When the rocket reaches the top, initiate the crash
-                if (y == 0)
+                // Initiate explosion when half of the rocket is off the screen
+                if (y == -rocketHeight / 2)
                 {
                     Console.Clear();
 
                     // Display crash explosion
-                    Console.SetCursorPosition(centerX, y);
+                    Console.SetCursorPosition(centerX, 0); // Position explosion at the top
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("💥 BOOM! 💥");
                     Console.ResetColor();
@@ -950,7 +970,6 @@ namespace Space_Adventure_Game
                     // Scatter debris
                     for (int i = 0; i < 50; i++) // Number of debris pieces to scatter
                     {
-                        // Randomly scatter debris
                         Console.SetCursorPosition(
                             random.Next(0, consoleWidth), // Random horizontal position
                             random.Next(0, consoleHeight) // Random vertical position
@@ -960,6 +979,7 @@ namespace Space_Adventure_Game
                         Console.Write(GetRandomDebris()); // Print a random debris character
                         Thread.Sleep(50); // Small delay between pieces
 
+                       
                         // Display "GAME OVER" in the center after scattering a few debris pieces
                         if (i == 25) // Midway through the debris scattering
                         {
@@ -970,10 +990,36 @@ namespace Space_Adventure_Game
                         }
                     }
 
+                    string[] reaperArt = new string[]
+{
+    "              ,____",
+    "              |---.\\",
+    "      ___     |    `",
+    "     / .-\\  ./=)",
+    "    |  |\"|_/\\/|",
+    "    ;  |-;| /_|",
+    "   / \\_| |/ \\ |",
+    "  /      \\/\\( |",
+    "  |   /  |` ) |",
+    "  /   \\_/     |",
+    " /--._/  \\    |",
+    " `/|)    |    |",
+    "   /     |    |",
+    "  .'      |   |",
+    " /         \\  |",
+    "(_. -.__.__./ \\"
+};
+
+
                     // After scattering, display a final message
                     Console.SetCursorPosition(0, consoleHeight - 1); // Move to the bottom of the screen
                     Console.ResetColor();
-                    Console.WriteLine("\n\nThe rocket has crashed, and the pieces have scattered. Press any key to continue...");
+                    //foreach(var line in reaperArt)
+                    //{
+                    //    Console.WriteLine(line);
+                    //}
+                    AnimateReaperMovingRight(reaperArt);
+                    Console.WriteLine("\n\nThe rocket has broken apart, due to the  lack of resources Captain Manuel and the rest of the crew are lost!!!!!!. Press any key to continue...");
                     Console.ReadKey();
                     return;
                 }
@@ -989,12 +1035,47 @@ namespace Space_Adventure_Game
         }
 
 
+        static void AnimateReaperMovingRight(string[] reaperArt)
+        {
+            Console.Clear();
+
+            int consoleWidth = Console.WindowWidth; // Width of the console
+            int consoleHeight = Console.WindowHeight; // Height of the console
+            int startX = 0; // Starting position on the left
+            int centerY = (consoleHeight - reaperArt.Length) / 2; // Center the reaper vertically
+
+            // Animation loop
+            for (int x = startX; x <= consoleWidth; x++)
+            {
+                Console.Clear();
+
+                // Draw the reaper at the current position
+                for (int i = 0; i < reaperArt.Length; i++)
+                {
+                    int lineY = centerY + i; // Calculate the vertical position for each line
+
+                    // Ensure the line is within the screen bounds
+                    if (lineY >= 0 && lineY < consoleHeight && x + reaperArt[i].Length < consoleWidth)
+                    {
+                        Console.SetCursorPosition(x, lineY); // Set the position for the current line
+                        Console.WriteLine(reaperArt[i]);
+                    }
+                }
+
+                Thread.Sleep(50); // Delay to create the animation effect
+            }
+
+            Console.Clear(); // Clear the screen after the reaper disappears
+            Console.WriteLine("The reaper has vanished into the void...");
+        }
 
 
 
 
 
-        #endregion 
+
+
+        #endregion
 
 
         #region Helper methods
@@ -1062,7 +1143,39 @@ namespace Space_Adventure_Game
             return option;
         }
 
-        
+        static bool IsValidResponse(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string response = Console.ReadLine();
+
+                // Check if response is valid
+                if (string.IsNullOrWhiteSpace(response))
+                {
+                    Console.WriteLine("Answer cannot be null or empty. Please try again.");
+                    continue;
+                }
+
+                response = response.Trim().ToLower(); // Normalize input
+
+                if (response == "y")
+                {
+                    return true; // Yes = true
+                }
+                else if (response == "n")
+                {
+                    return false; // No = false
+                }
+                else
+                {
+                    Console.WriteLine("Invalid answer. Please reply with 'y' or 'n'.");
+                }
+            }
+        }
+
+
+
 
 
         #endregion

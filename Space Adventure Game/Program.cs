@@ -408,11 +408,12 @@ namespace Space_Adventure_Game
 
                 Console.WriteLine("1.- Load Fuel");
                 Console.WriteLine("2.- Buy Supplies");
-                Console.WriteLine("3.- Back to Destinations Menu");
-                Console.WriteLine("4.- Back to Main Menu");
-                Console.WriteLine("5.- Quit Game");
+                Console.WriteLine("3.- Go to Launch Platform");
+                Console.WriteLine("4.- Back to Destinations Menu");
+                Console.WriteLine("5.- Back to Main Menu");
+                Console.WriteLine("6.- Quit Game");
 
-                int selectedOption = ValidateOption("\nWhat would do you like to do next?: ", 1, 5);
+                int selectedOption = ValidateOption("\nWhat would do you like to do next?: ", 1, 6);
 
                 switch (selectedOption)
                 {
@@ -433,17 +434,21 @@ namespace Space_Adventure_Game
                         break;
 
                     case 3:
+                        GoToLaunchPlatform(start, destinationOption);
+                        break;
+
+                    case 4:
                         Console.Write("Press any key to continue...");
 
                         return;
 
-                    case 4:
+                    case 5:
                         MainMenu();
 
                         return;
 
 
-                    case 5:
+                    case 6:
                         QuitGame();
                         isPlaying = false;
 
@@ -577,9 +582,12 @@ namespace Space_Adventure_Game
             string message = " Dear Travlers, please be reminded that currently Mars does not have refueling station or fuel supplies. If you are heading there . . .STOCK UP! ";
             int delay = 150;
 
+
+            stopTeleprompter = false;
             // Start the teleprompter in a background thread
             Thread teleprompterThread = new Thread(() => CreateTeleprompter(message, delay));
             teleprompterThread.Start();
+            
 
             while (isPlaying)
             {
@@ -599,7 +607,7 @@ namespace Space_Adventure_Game
                 int numOfItems = planetsList[planetIndex].AvailableCargo.Count;
 
                 Console.WriteLine($"  {numOfItems + 1 }.- Go back");
-                Console.WriteLine($"  {numOfItems + 2}.- Quit Game");
+                Console.WriteLine($"  {numOfItems + 2 }.- Quit Game");
 
 
                 // Move the cursor to the correct position for user interaction
@@ -607,7 +615,30 @@ namespace Space_Adventure_Game
                 Console.SetCursorPosition(0, cursorLine);
 
                 // Get the user's item selection
-                int itemIndex = ValidateOption("\nPlease choose the item you wish to buy: ", 1, planetsList[planetIndex].AvailableCargo.Count);
+                int itemIndex = ValidateOption("\nPlease choose the item you wish to buy: ", 1, planetsList[planetIndex].AvailableCargo.Count + 2);
+
+                int numOfOptions = planetsList[planetIndex].AvailableCargo.Count;
+                switch (itemIndex)
+                {
+                    case int n when n >= 1 && n <= numOfOptions:
+
+                        break;
+
+                    case int n when n == numOfOptions + 1:
+                        // Stop the teleprompter 
+                        stopTeleprompter = true;
+                        teleprompterThread.Join();
+                        return;
+
+                    case int n when n == numOfOptions + 2:                              
+                        QuitGame();
+
+                        // Stop the teleprompter 
+                        stopTeleprompter = true;
+                        teleprompterThread.Join();
+
+                        break;                        
+                }
 
                 // Move the cursor again for quantity input
                 cursorLine = Console.CursorTop;
@@ -624,10 +655,9 @@ namespace Space_Adventure_Game
                 cursorLine = Console.CursorTop;
                 Console.SetCursorPosition(0, cursorLine);
                 string input = Console.ReadLine();
-                if (input.Equals("q", StringComparison.OrdinalIgnoreCase))
-                {
-                    isPlaying = false; // Exit the loop
-                }
+
+
+               
             }
 
             // Stop the teleprompter when the user exits
@@ -681,6 +711,286 @@ namespace Space_Adventure_Game
             Console.Write("\n");
 
         }
+
+        static void GoToLaunchPlatform(int start, int destinationOption)
+        {
+            Console.Clear();
+            PrintScreenHeader();
+
+            bool requirmentsMet;
+            bool isPlaying = false;
+
+            string initialLocation = shipsList[start -1].Location.Name;
+            string Destination = planetsList[destinationOption -1].Name;
+
+
+          
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Warning. You don't meet the minimum requirments for the trip from {initialLocation} to {Destination}");
+                Console.ResetColor();
+                Console.Write("Are you sure you want to continue (y/n)? ");
+                string answer = Console.ReadLine();
+
+                if(string.IsNullOrWhiteSpace(answer))
+                {
+                    Console.WriteLine("Answer cannot be null");
+                }
+                if (answer.Trim().ToLower() != "y" || answer.Trim().ToLower() != "n")
+                {
+                    Console.WriteLine("Invalid answer please reply y or n");
+                }
+                if(answer.Trim().ToLower() == "y")
+                {
+                    Console.WriteLine("Please proceed at your own risk. Good Luck!!!");
+                    StartTrip(start, destinationOption);
+                }
+          
+
+            static void StartTrip(int start, int destination)
+            {
+                Console.Clear();
+                PrintScreenHeader();
+
+                Console.Write("Prepare for launch, please press any key to continue: ");
+                Console.ReadKey();
+
+                LaunchCountdown();
+
+                // Rocket ASCII Art
+                string[] rocketArt = new string[]
+                {
+                "       !",
+                "       ^",
+                "      / \\",
+                "     /___\\",
+                "    |=   =|",
+                "    |  B  |",
+                "    |  V  |",
+                "    |  C  |",
+                "    |     |",
+                "    |     |",
+                "   /|##!##|\\",
+                "  / |##!##| \\",
+                " /  |##!##|  \\",
+                "|  / ^ | ^ \\  |",
+                "| /  ( | )  \\ |",
+                "|/   ( | )   \\|",
+                "    ((   ))",
+                "   ((  :  ))",
+                "    ((   ))",
+                "     (( ))",
+                "      ( )",
+                "       .",
+                "       ."
+                };
+
+                AnimateRocketCrashInRealTime(rocketArt);
+
+
+            }
+
+
+        }
+
+        /// <summary>
+        /// Simulate Launch countdown
+        /// </summary>
+        static void LaunchCountdown()
+        {
+            int countdownStart = 5;
+
+            Console.Clear();
+            PrintScreenHeader();
+
+            string[] rocketArt = 
+              {
+                "       !",
+                "       ^",
+                "      / \\",
+                "     /___\\",
+                "    |=   =|",
+                "    |  B  |",
+                "    |  V  |",
+                "    |  C  |",
+                "    |     |",
+                "    |     |",
+                "   /|##!##|\\",
+                "  / |##!##| \\",
+                " /  |##!##|  \\",
+                "|  / ^ | ^ \\  |",
+                "| /         \\ |",
+                "|/           \\|",
+              };
+            DisplayCenteredRocket(rocketArt);
+
+
+            Console.WriteLine("\nLaunching...");
+
+            // Save the cursor's current position
+            int left = Console.CursorLeft;
+            int top = Console.CursorTop;
+
+            // Countdown loop
+            for (int i = countdownStart; i >= 0; i--)
+            {
+                Console.SetCursorPosition(left, top); 
+                PrintCentered($" {i} seconds...   "); 
+                Thread.Sleep(1000);
+            }
+
+           
+
+
+            // Final message
+            Console.SetCursorPosition(left, top);
+            PrintCentered("Liftoff! 🚀          ");
+            Thread.Sleep(1000);
+
+        }
+
+
+        static void AnimateRocketLaunch(string[] rocketArt)
+        {
+            Console.Clear();
+
+            int rocketHeight = rocketArt.Length; // Height of the rocket
+            int consoleHeight = Console.WindowHeight; // Height of the console window
+            int consoleWidth = Console.WindowWidth; // Width of the console window
+            int startY = consoleHeight - rocketHeight; // Start position for the rocket
+            int centerX = (consoleWidth - rocketArt[0].Length) / 2; // Calculate horizontal center based on the longest line
+
+            // Start the animation
+            for (int y = startY; y >= -rocketHeight; y--) // Move up until the rocket disappears
+            {
+                Console.Clear();
+
+                // Print the rocket at the current position
+                for (int i = 0; i < rocketArt.Length; i++)
+                {
+                    int lineY = y + i; // Calculate the line's vertical position
+
+                    if (lineY >= 0 && lineY < consoleHeight) // Print only if the line is within the visible screen
+                    {
+                        Console.SetCursorPosition(centerX, lineY); // Align the rocket consistently
+                        Console.WriteLine(rocketArt[i]);
+                    }
+                }
+
+                Thread.Sleep(100); // Add delay to simulate smooth animation
+            }
+
+            // After animation, display a final message
+            Console.Clear();
+            Console.WriteLine("\n\nThe rocket has successfully launched into space! 🚀");
+            Thread.Sleep(2000); // Pause to allow the user to see the message
+        }
+
+      
+
+        static void DisplayCenteredRocket(string[] rocketArt)
+        {          
+            int consoleHeight = Console.WindowHeight; // Total height of the console
+            int consoleWidth = Console.WindowWidth; // Total width of the console
+            int rocketHeight = rocketArt.Length; // Height of the rocket
+            int rocketWidth = rocketArt[0].Length; // Width of the rocket
+
+            int startY = (consoleHeight - rocketHeight) / 2; // Calculate vertical starting position
+            int startX = (consoleWidth - rocketWidth) / 2; // Calculate horizontal starting position
+
+            for (int i = 0; i < rocketArt.Length; i++)
+            {
+                // Set the cursor position for each line of the rocket
+                Console.SetCursorPosition(startX, startY + i);
+                Console.WriteLine(rocketArt[i]);
+            }
+        }
+
+
+        static void AnimateRocketCrashInRealTime(string[] rocketArt)
+        {
+            Console.Clear();
+
+            int rocketHeight = rocketArt.Length; // Height of the rocket
+            int consoleHeight = Console.WindowHeight; // Height of the console window
+            int consoleWidth = Console.WindowWidth; // Width of the console window
+            int startY = consoleHeight - rocketHeight; // Start position for the rocket
+            int centerX = (consoleWidth - rocketArt[0].Length) / 2; // Calculate horizontal center
+            Random random = new Random();
+
+            // Rocket Ascension Animation
+            for (int y = startY; y >= 0; y--) // Move up until the top
+            {
+                Console.Clear();
+
+                // Print the rocket at the current position
+                for (int i = 0; i < rocketArt.Length; i++)
+                {
+                    int lineY = y + i; // Calculate the line's vertical position
+
+                    if (lineY >= 0 && lineY < consoleHeight) // Print only if the line is within the visible screen
+                    {
+                        Console.SetCursorPosition(centerX, lineY); // Align the rocket consistently
+                        Console.WriteLine(rocketArt[i]);
+                    }
+                }
+
+                Thread.Sleep(100); // Add delay to simulate smooth animation
+
+                // When the rocket reaches the top, initiate the crash
+                if (y == 0)
+                {
+                    Console.Clear();
+
+                    // Display crash explosion
+                    Console.SetCursorPosition(centerX, y);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("💥 BOOM! 💥");
+                    Console.ResetColor();
+
+                    // Scatter debris
+                    for (int i = 0; i < 50; i++) // Number of debris pieces to scatter
+                    {
+                        // Randomly scatter debris
+                        Console.SetCursorPosition(
+                            random.Next(0, consoleWidth), // Random horizontal position
+                            random.Next(0, consoleHeight) // Random vertical position
+                        );
+
+                        Console.ForegroundColor = (ConsoleColor)random.Next(1, 16); // Random color
+                        Console.Write(GetRandomDebris()); // Print a random debris character
+                        Thread.Sleep(50); // Small delay between pieces
+
+                        // Display "GAME OVER" in the center after scattering a few debris pieces
+                        if (i == 25) // Midway through the debris scattering
+                        {
+                            Console.SetCursorPosition((consoleWidth - "GAME OVER".Length) / 2, consoleHeight / 2); // Center the message
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("GAME OVER");
+                            Console.ResetColor();
+                        }
+                    }
+
+                    // After scattering, display a final message
+                    Console.SetCursorPosition(0, consoleHeight - 1); // Move to the bottom of the screen
+                    Console.ResetColor();
+                    Console.WriteLine("\n\nThe rocket has crashed, and the pieces have scattered. Press any key to continue...");
+                    Console.ReadKey();
+                    return;
+                }
+            }
+        }
+
+        // Helper Method: Returns a random debris character
+        static char GetRandomDebris()
+        {
+            char[] debris = new char[] { '/', '\\', '*', '-', '+', '|', 'o', '@', '#', '$', '%' };
+            Random random = new Random();
+            return debris[random.Next(debris.Length)];
+        }
+
+
+
+
 
 
 
@@ -751,6 +1061,9 @@ namespace Space_Adventure_Game
 
             return option;
         }
+
+        
+
 
         #endregion
 

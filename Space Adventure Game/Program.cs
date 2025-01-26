@@ -47,11 +47,11 @@ namespace Space_Adventure_Game
 
             cargoItemsList = new List<Cargo>()
             {
-                new Cargo("Food Supplies Crate", 200),
+                new Cargo("Food Supplies Crate", 150),
                 new Cargo("Fuel Tank", 50),
-                new Cargo("Medical Supplies crate", 300),
+                new Cargo("Medical Supplies crate", 50),
                 new Cargo("Weapons Box", 300),
-                new Cargo("Ammunition Box", 150)
+                new Cargo("Ammunition Box", 50)
             };
 
             shipsList = new List<SpaceShip>()
@@ -68,17 +68,17 @@ namespace Space_Adventure_Game
                 { ("Mars", "Earth"), (200, 0.5, 0.5) },
                 { ("Earth", "Jupiter"), (400, 1.0, 1.0) },
                 { ("Jupiter", "Earth"), (400, 1.0, 1.0) },
-                { ("Mars", "Jupiter"), (350, 0.8, 0.7) },
-                { ("Jupiter", "Mars"), (350, 0.8, 0.7) },
-                { ("Earth", "Neptune"), (550, 1.5, 2.0) },
-                { ("Neptune", "Earth"), (550, 1.5, 2.0) },
-                { ("Jupiter", "Neptune"), (450, 1.0, 1.5) },
-                { ("Neptune", "Jupiter"), (450, 1.0, 1.5) },
-                { ("Mars", "Neptune"), (500, 1.2, 1.8) },
-                { ("Neptune", "Mars"), (500, 1.2, 1.8) }
+                { ("Mars", "Jupiter"), (350, 0.7, 0.5) },
+                { ("Jupiter", "Mars"), (350, 0.7, 0.5) },
+                { ("Earth", "Neptune"), (550, 1, 2) },
+                { ("Neptune", "Earth"), (550, 1, 2) },
+                { ("Jupiter", "Neptune"), (450, 1.0, 2.0) },
+                { ("Neptune", "Jupiter"), (450, 1.0, 2.0) },
+                { ("Mars", "Neptune"), (500, 1, 1.5) },
+                { ("Neptune", "Mars"), (500, 1, 1.5) }
             };
 
-            //Create cargo quantity for the items
+            //Create cargo quantity for the items and assign cargo to the planets
             Random random = new Random();          
 
             foreach (var planet in planetsList)
@@ -181,7 +181,7 @@ namespace Space_Adventure_Game
             {
                 Console.Clear();
                 PrintScreenHeader();
-                Console.WriteLine("\nWELCOME!\n");
+                Console.WriteLine("\nWELCOME! You are about to begin an intergalactic adventure.\n");
 
                 //Print the menu options
                 for (int i = 0; i < shipsList.Count; i++)
@@ -261,12 +261,12 @@ namespace Space_Adventure_Game
 
                 //Print the chosen ship stats and request player to chose the destination
                 Console.WriteLine($"\nHello Captain {captainName}, you have chosen the {shipsList[shipOption - 1].Name}.");
-                Console.WriteLine($"\nThese are your current ship stats:\n");
+                PrintColorText($"\nThese are your current ship stats:\n\n", ConsoleColor.Yellow);
 
                 ShipSpecs(shipOption);
+                PrintColorText("Ready for the trip?\n", ConsoleColor.Red);
 
-                Console.WriteLine("Ready for an intergalactic trip?");
-
+             
                 //Print ships menu list            
                 Console.WriteLine("\n");
                 for (int i = 0; i < planetsList.Count; i++)
@@ -316,14 +316,22 @@ namespace Space_Adventure_Game
         /// <param name="shipOtion"></param>
         static void ShipSpecs(int shipOtion)
         {
-            string[] columnNames = { "Name", "Fuel Lvl", "Max Cargo", "Current Cargo", "Location" };
+            string[] columnNames = { "Name", "Fuel Lvl", "Max Cargo", "Current Cargo", "Current Weight", "Location" };
             var table = new ConsoleTable(columnNames);
+            double cargoWeight = 0;
+
+            foreach (var item in shipsList[shipOtion - 1].CargoList)
+            {
+                cargoWeight += item.Weight;
+            }
+
 
             table.AddRow(
                 shipsList[shipOtion - 1].Name,
                 shipsList[shipOtion - 1].Fuel + "/" + shipsList[shipOtion - 1].MaxFuelCapacity,
                 shipsList[shipOtion - 1].CargoCapacity,
-                shipsList[shipOtion - 1].CargoList.Count == 0 ? "Empty" : shipsList[shipOtion - 1].CargoList.Count,
+                shipsList[shipOtion - 1].CargoList.Count == 0 ? "Empty" : shipsList[shipOtion - 1].CargoList.Count + " items",
+                cargoWeight,
                 shipsList[shipOtion - 1].Location.Name);
 
             table.Write(Format.Minimal);            
@@ -341,13 +349,14 @@ namespace Space_Adventure_Game
                 Console.Write($"\n\nNo predefined travel requirements for the route {start} to {destination}. Press any key to continue.");
                 return false;
             }
-
+           
             var requirements = travelRequirements[(start, destination)];
 
-            Console.WriteLine($"\nTravel Requirements from {start} to {destination}:");
-            Console.WriteLine($"- Fuel: {requirements.fuelUnits} units");
-            Console.WriteLine($"- Medical Supplies: {requirements.medicalCrates} crate(s)");
-            Console.WriteLine($"- Food Supplies: {requirements.foodCrates} crate(s)");
+           PrintColorText($"\nTravel Requirements from {start} to {destination}:\n\n", ConsoleColor.Yellow);
+            var table = new ConsoleTable("Fuel", "Medical Supplies", "Food Supplies");
+
+            table.AddRow($"{ requirements.fuelUnits} units", $"{requirements.medicalCrates} crate(s)", $"{requirements.foodCrates} crate(s)");
+            table.Write(Format.Minimal);
 
             return true;
         }
@@ -385,11 +394,13 @@ namespace Space_Adventure_Game
         static void HandleDestinationOption(int start, int destinationOption)
         {
             bool isPlaying = true;
-
-            while(isPlaying)
+            
+            while (isPlaying)
             {
                 string currentLocation = shipsList[start - 1].Location.Name;
                 string destination = planetsList[destinationOption - 1].Name;
+
+                bool meetRequirements = MeetsTheRequirements(currentLocation, destination);
 
                 Console.Clear();
                 PrintScreenHeader();
@@ -402,10 +413,22 @@ namespace Space_Adventure_Game
                     
                 }
 
-                Console.WriteLine("\nYour current ship stats: ");
+                PrintColorText("\nYour current ship stats:\n\n", ConsoleColor.Yellow);
                 ShipSpecs(start);
 
-                Console.WriteLine("Looks like you will need some supplies.\n");                
+                if(!meetRequirements)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Looks like you will need some supplies.\n");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("You meet the minimum requirements for this trip.\n");
+                    Console.ResetColor();
+                }
+                
 
                 Console.WriteLine("1.- Load Fuel");
                 Console.WriteLine("2.- Buy Supplies");
@@ -460,6 +483,70 @@ namespace Space_Adventure_Game
 
         }
 
+        /// <summary>
+        /// Evaluate if the player meets the travel requirements
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="destination"></param>
+        /// <param name="currentFuelLvl"></param>
+        /// <param name="currentMedSupplies"></param>
+        /// <param name="currentFoodSupplies"></param>
+        /// <returns></returns>
+        static bool MeetsTheRequirements(string start, string destination)
+        {
+          
+            if (!travelRequirements.ContainsKey((start, destination)))
+            {
+                Console.WriteLine($"No travel requirements found for route from {start} to {destination}.");
+                return false;
+            }
+
+            var requirements = travelRequirements[(start, destination)];
+            double neededFuelUnits = requirements.fuelUnits;
+            double neededMedSupplies = requirements.medicalCrates;
+            double neededFoodSupplies = requirements.foodCrates;
+
+            // Find the current ship by its location
+            SpaceShip currentShip = shipsList.FirstOrDefault(ship => ship.Location.Name == start);
+            if (currentShip == null)
+            {
+                Console.WriteLine($"No ship found at {start}.");
+                return false;
+            }
+                        
+            double currentFuelUnits = currentShip.Fuel;
+            double currentFoodSupplies = 0;
+            double currentMedSupplies = 0;
+                       
+         
+            foreach (var cargo in currentShip.CargoList)
+            {
+                switch (cargo.Name)
+                {
+                    case "Fuel Tank":
+                        currentFuelUnits += cargo.Weight;
+                        break;
+                    case "Food Supplies Crate":
+                        currentFoodSupplies += cargo.Weight;
+                        break;
+                    case "Medical Supplies crate":
+                        currentMedSupplies += cargo.Weight;
+                        break;
+                }
+            }
+                       
+            // Check if requirements are met
+            return currentFuelUnits >= neededFuelUnits &&
+                   currentFoodSupplies >= neededFoodSupplies &&
+                   currentMedSupplies >= neededMedSupplies;
+        }
+
+
+        /// <summary>
+        /// Go to the simulated fuel station
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="destinationOption"></param>
         static void GoToFuelStation(int start, int destinationOption)
         {
             bool isPlaying = true;
@@ -488,19 +575,33 @@ namespace Space_Adventure_Game
                 string[] columnNames = { "Fuel Lvl", "Max Fuel Capacity", "Required Fuel" };
                 var table = new ConsoleTable(columnNames);
 
-                Console.WriteLine("\n");
+
+
+                Console.ForegroundColor = ConsoleColor.Blue;
                 PrintCentered($"{currentLocation.ToUpper()} - F U E L  S T A T I O N\n");
+                Console.ResetColor();
+
+                PrintColorText($"\nTravel Fuel Stats for {shipsList[start - 1].Name}: \n\n", ConsoleColor.Yellow);
                 
                 table.AddRow(fuelLvl, maxFuelLvl, $"{requiredFuel}");
 
-                table.Write(Format.Minimal);                
+                table.Write(Format.Minimal);
 
-                Console.Write("Press any key to start filling up your tank: ");
-                Console.ReadKey();
+                bool response = IsValidResponse("\nDo you want to start fueling your ship? (y/n): ");
 
-                Console.WriteLine("\n");
-                GetFuel(fuelLvl, maxFuelLvl, requiredFuel, start -1);
-                return;
+                if(response)
+                {
+                    PrintColorText("\nPress any key to start filling up your tank: ", ConsoleColor.Red);
+                    Console.ReadKey();
+
+                    Console.WriteLine("\n");
+                    GetFuel(fuelLvl, maxFuelLvl, requiredFuel, start - 1);
+                    return;
+                }
+                else
+                {
+                    return;
+                }
 
                 
 
@@ -594,6 +695,7 @@ namespace Space_Adventure_Game
             {
                 string currentLocation = shipsList[start - 1].Location.Name;
                 string destination = planetsList[destinationOption - 1].Name;
+                
 
                 int planetIndex = planetsList.FindIndex(x => x.Name == currentLocation);
 
@@ -619,11 +721,57 @@ namespace Space_Adventure_Game
                 int itemIndex = ValidateOption("\nPlease choose the item you wish to buy: ", 1, planetsList[planetIndex].AvailableCargo.Count + 2);
 
                 int numOfOptions = planetsList[planetIndex].AvailableCargo.Count;
+
                 switch (itemIndex)
                 {
                     case int n when n >= 1 && n <= numOfOptions:
+                        {
+                            // Get the quantity to buy
+                            var selectedCargo = planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex - 1).Key;
+                            int maxQty = planetsList[planetIndex].AvailableCargo[selectedCargo];
+                            int qty = ValidateOption("Please enter the quantity: ", 1, maxQty);
 
-                        break;
+                            PrintColorText($"\nYou selected {qty} unit(s) of {selectedCargo.Name}.\n", ConsoleColor.Red);
+
+                            // Calculate the total weight of the items
+                            double itemWeight = selectedCargo.Weight;
+                            double totalItemsWeight = itemWeight * qty;
+
+                            // Calculate the ship's current cargo weight
+                            double currentCargoWeight = shipsList[start - 1].CargoList.Sum(cargo => cargo.Weight);
+
+                            // Get the ship's max cargo capacity
+                            double maxCargo = shipsList[start - 1].CargoCapacity;
+
+                            if (currentCargoWeight + totalItemsWeight > maxCargo)
+                            {
+                                Console.WriteLine($"The total weight of the items exceeds the max cargo capacity of {maxCargo}. Unable to add to the ship.");
+                            }
+                            else
+                            {
+                                // Deduct the purchased quantity from the planet's stock using RemoveCargo
+                                planetsList[planetIndex].RemoveCargo(selectedCargo, qty);
+
+                                // Create a new Cargo object with the total weight and add it to the ship
+                                shipsList[start - 1].CargoList.Add(new Cargo(selectedCargo.Name, totalItemsWeight));
+
+                                PrintColorText($"\nSuccessfully added {qty} unit(s) of {selectedCargo.Name} (Total Weight: {totalItemsWeight}) to your ship's cargo.\n\n", ConsoleColor.Green);
+                            }
+
+                            bool proceed = IsValidResponse("Do you wish to buy anything else (y/n)? ");
+
+                            if (proceed)
+                            {
+                                
+                                continue;
+                            }
+                            else
+                            {
+                                
+                                return;
+                            }
+                        }
+
 
                     case int n when n == numOfOptions + 1:
                         // Stop the teleprompter 
@@ -644,29 +792,19 @@ namespace Space_Adventure_Game
                 // Move the cursor again for quantity input
                 cursorLine = Console.CursorTop;
                 Console.SetCursorPosition(0, cursorLine);
-
-                // Get the quantity to buy
-                int maxQty = planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex).Value;
-                int qty = ValidateOption("Please enter the quantity: ", 1, maxQty);
-
-                Console.WriteLine($"You selected {qty} of {planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex).Key}.");
-                Console.WriteLine("Press any key to continue or 'q' to quit.");
-
-                // Ensure the cursor is positioned correctly for input
-                cursorLine = Console.CursorTop;
-                Console.SetCursorPosition(0, cursorLine);
-                string input = Console.ReadLine();
-
-
-               
             }
 
             // Stop the teleprompter when the user exits
             stopTeleprompter = true;
             teleprompterThread.Join(); // Wait for the teleprompter thread to stop
         }
-   
 
+
+        /// <summary>
+        /// Simulate a teleprompter for the store page
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="delay"></param>
         static void CreateTeleprompter(string message, int delay)
         {
             Console.CursorVisible = true; // Ensure the cursor remains visible
@@ -705,6 +843,9 @@ namespace Space_Adventure_Game
         }
 
 
+        /// <summary>
+        /// Create the page header for the store
+        /// </summary>
         static void PrintStoreHeader()
         {            
             Console.SetCursorPosition(0, 1);         
@@ -713,6 +854,11 @@ namespace Space_Adventure_Game
 
         }
 
+        /// <summary>
+        /// Simulate the launch platform
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="destinationOption"></param>
         static void GoToLaunchPlatform(int start, int destinationOption)
         {
             Console.Clear();
@@ -730,7 +876,7 @@ namespace Space_Adventure_Game
             PrintCentered($"Captain {captainName} You don't meet the minimum requirments for the trip from {initialLocation} to {Destination}.");
             Console.ResetColor();
             Console.WriteLine("\nI strongly advise to reconsider, we have lost many ships that way.");
-            bool proceed = IsValidResponse("Do you want to at least get enough supplies to make it to the closest station (y/n)?");
+            bool proceed = IsValidResponse("Do you want to at least get enough supplies to make it to the closest station (y/n)? ");
 
             if( !proceed )
             {
@@ -755,17 +901,14 @@ namespace Space_Adventure_Game
                Console.ReadKey();   
             }
 
-
-
-
-
-
-
-
         }
 
-        
 
+        /// <summary>
+        /// Start the trip to the destination
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="destination"></param>
         static void StartTrip(int start, int destination)
         {
             Console.Clear();
@@ -1174,6 +1317,12 @@ namespace Space_Adventure_Game
             }
         }
 
+        static void PrintColorText(string text, ConsoleColor color)
+        {
+            Console.ForegroundColor = color; 
+            Console.Write(text);
+            Console.ResetColor();
+        }
 
 
 

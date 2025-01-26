@@ -15,6 +15,7 @@ namespace Space_Adventure_Game
         public List<Cargo> CargoList { get; private set; }
         public Planet Location { get; private set; }
 
+      
         public void Fly(Planet destination)
         {
             if(destination == null)
@@ -64,6 +65,7 @@ namespace Space_Adventure_Game
             else
             {
                 CargoList.Add(item);
+                               
             }
         }
 

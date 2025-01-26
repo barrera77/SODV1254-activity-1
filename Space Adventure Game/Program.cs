@@ -1,4 +1,5 @@
 ﻿using ConsoleTables;
+using System;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -325,7 +326,6 @@ namespace Space_Adventure_Game
                 cargoWeight += item.Weight;
             }
 
-
             table.AddRow(
                 shipsList[shipOtion - 1].Name,
                 shipsList[shipOtion - 1].Fuel + "/" + shipsList[shipOtion - 1].MaxFuelCapacity,
@@ -374,7 +374,6 @@ namespace Space_Adventure_Game
 
             var table = new ConsoleTable(columnNames);
 
-
             foreach (var route in travelRequirements)
             {
                 var (start, destination) = route.Key;
@@ -409,8 +408,7 @@ namespace Space_Adventure_Game
                 if (!isValudRoute)
                 {
                     isPlaying = true;
-                    return;
-                    
+                    return;                    
                 }
 
                 PrintColorText("\nYour current ship stats:\n\n", ConsoleColor.Yellow);
@@ -425,10 +423,9 @@ namespace Space_Adventure_Game
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("You meet the minimum requirements for this trip.\n");
+                    Console.WriteLine("Congrats! you meet the minimum requirements for this trip.\n");
                     Console.ResetColor();
-                }
-                
+                }                
 
                 Console.WriteLine("1.- Load Fuel");
                 Console.WriteLine("2.- Buy Supplies");
@@ -458,7 +455,8 @@ namespace Space_Adventure_Game
                         break;
 
                     case 3:
-                        GoToLaunchPlatform(start, destinationOption);
+                        
+                        GoToLaunchPlatform(start, destinationOption, meetRequirements); 
                         break;
 
                     case 4:
@@ -471,16 +469,13 @@ namespace Space_Adventure_Game
 
                         return;
 
-
                     case 6:
                         QuitGame();
                         isPlaying = false;
 
                         break;
                 }
-
             }
-
         }
 
         /// <summary>
@@ -516,8 +511,7 @@ namespace Space_Adventure_Game
                         
             double currentFuelUnits = currentShip.Fuel;
             double currentFoodSupplies = 0;
-            double currentMedSupplies = 0;
-                       
+            double currentMedSupplies = 0;                       
          
             foreach (var cargo in currentShip.CargoList)
             {
@@ -540,7 +534,6 @@ namespace Space_Adventure_Game
                    currentFoodSupplies >= neededFoodSupplies &&
                    currentMedSupplies >= neededMedSupplies;
         }
-
 
         /// <summary>
         /// Go to the simulated fuel station
@@ -565,8 +558,7 @@ namespace Space_Adventure_Game
                     return;
                 }
 
-                var requirements = travelRequirements[(currentLocation, destination)];
-                
+                var requirements = travelRequirements[(currentLocation, destination)];                
                 int requiredFuel = requirements.fuelUnits;
 
                 Console.Clear();
@@ -574,8 +566,6 @@ namespace Space_Adventure_Game
 
                 string[] columnNames = { "Fuel Lvl", "Max Fuel Capacity", "Required Fuel" };
                 var table = new ConsoleTable(columnNames);
-
-
 
                 Console.ForegroundColor = ConsoleColor.Blue;
                 PrintCentered($"{currentLocation.ToUpper()} - F U E L  S T A T I O N\n");
@@ -601,13 +591,17 @@ namespace Space_Adventure_Game
                 else
                 {
                     return;
-                }
-
-                
-
+                }            
             }         
         }
 
+        /// <summary>
+        /// Get fuel for teh sip
+        /// </summary>
+        /// <param name="currentLevel"></param>
+        /// <param name="maxLevel"></param>
+        /// <param name="requiredFuel"></param>
+        /// <param name="ship"></param>
         static void GetFuel(int currentLevel, int maxLevel, int requiredFuel, int ship)
         {            
             int loadedFuel = 0; 
@@ -657,8 +651,6 @@ namespace Space_Adventure_Game
             Console.WriteLine("\n");
             loadedFuel = maxLevel - currentLevel;            
             shipsList[ship].Refuel(loadedFuel);
-
-
             
             int remainingFuel = requiredFuel - maxLevel;
             if (remainingFuel > 0)
@@ -675,7 +667,11 @@ namespace Space_Adventure_Game
             Console.ReadKey();
         }
 
-
+        /// <summary>
+        /// Get supplies for the ship
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="destinationOption"></param>
         static void GoToSuppliesStore(int start, int destinationOption)
         {
             bool isPlaying = true;
@@ -683,7 +679,6 @@ namespace Space_Adventure_Game
             // Teleprompter settings
             string message = " Dear Travlers, please be reminded that currently Mars does not have refueling station or fuel supplies. If you are heading there . . .STOCK UP! ";
             int delay = 150;
-
 
             stopTeleprompter = false;
             // Start the teleprompter in a background thread
@@ -694,8 +689,7 @@ namespace Space_Adventure_Game
             while (isPlaying)
             {
                 string currentLocation = shipsList[start - 1].Location.Name;
-                string destination = planetsList[destinationOption - 1].Name;
-                
+                string destination = planetsList[destinationOption - 1].Name;                
 
                 int planetIndex = planetsList.FindIndex(x => x.Name == currentLocation);
 
@@ -711,7 +705,6 @@ namespace Space_Adventure_Game
 
                 Console.WriteLine($"  {numOfItems + 1 }.- Go back");
                 Console.WriteLine($"  {numOfItems + 2 }.- Quit Game");
-
 
                 // Move the cursor to the correct position for user interaction
                 int cursorLine = Console.CursorTop;
@@ -729,7 +722,7 @@ namespace Space_Adventure_Game
                             // Get the quantity to buy
                             var selectedCargo = planetsList[planetIndex].AvailableCargo.ElementAt(itemIndex - 1).Key;
                             int maxQty = planetsList[planetIndex].AvailableCargo[selectedCargo];
-                            int qty = ValidateOption("Please enter the quantity: ", 1, maxQty);
+                            int qty = ValidateOption("\nPlease enter the quantity: ", 1, maxQty);
 
                             PrintColorText($"\nYou selected {qty} unit(s) of {selectedCargo.Name}.\n", ConsoleColor.Red);
 
@@ -761,17 +754,17 @@ namespace Space_Adventure_Game
                             bool proceed = IsValidResponse("Do you wish to buy anything else (y/n)? ");
 
                             if (proceed)
-                            {
-                                
+                            {                               
                                 continue;
                             }
                             else
                             {
-                                
+                                // Stop the teleprompter 
+                                stopTeleprompter = true;
+                                teleprompterThread.Join();
                                 return;
                             }
                         }
-
 
                     case int n when n == numOfOptions + 1:
                         // Stop the teleprompter 
@@ -798,7 +791,6 @@ namespace Space_Adventure_Game
             stopTeleprompter = true;
             teleprompterThread.Join(); // Wait for the teleprompter thread to stop
         }
-
 
         /// <summary>
         /// Simulate a teleprompter for the store page
@@ -842,7 +834,6 @@ namespace Space_Adventure_Game
             Console.CursorVisible = true; // Restore cursor visibility
         }
 
-
         /// <summary>
         /// Create the page header for the store
         /// </summary>
@@ -859,7 +850,7 @@ namespace Space_Adventure_Game
         /// </summary>
         /// <param name="start"></param>
         /// <param name="destinationOption"></param>
-        static void GoToLaunchPlatform(int start, int destinationOption)
+        static void GoToLaunchPlatform(int start, int destinationOption, bool meetRequirements)
         {
             Console.Clear();
             PrintScreenHeader();
@@ -869,47 +860,69 @@ namespace Space_Adventure_Game
 
             string initialLocation = shipsList[start -1].Location.Name;
             string Destination = planetsList[destinationOption -1].Name;
-                      
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine();
-            PrintCentered("W A R N I N G");
-            PrintCentered($"Captain {captainName} You don't meet the minimum requirments for the trip from {initialLocation} to {Destination}.");
-            Console.ResetColor();
-            Console.WriteLine("\nI strongly advise to reconsider, we have lost many ships that way.");
-            bool proceed = IsValidResponse("Do you want to at least get enough supplies to make it to the closest station (y/n)? ");
 
-            if( !proceed )
+            if (!meetRequirements)
             {
-                bool confirmation = IsValidResponse("Are you sure you want to continue (y/n)? ");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine();
+                PrintCentered("W A R N I N G");
+                PrintCentered($"Captain {captainName} You don't meet the minimum requirments for the trip from {initialLocation} to {Destination}.");
+                Console.ResetColor();
+                Console.WriteLine("\nI strongly advise to reconsider, we have lost many ships that way.");
+                bool proceed = IsValidResponse("Do you want to at least get enough supplies to make it to the closest station (y/n)? ");
 
-                if(confirmation)
+                if (!proceed)
                 {
-                    Console.WriteLine("Please proceed at your own risk. Good Luck!!!");
-                    StartTrip(start, destinationOption);
+                    bool confirmation = IsValidResponse("Are you sure you want to continue (y/n)? ");
 
+                    if (confirmation)
+                    {
+                        Console.WriteLine("Please proceed at your own risk. Good Luck!!!");
+                        StartTrip(start, destinationOption, meetRequirements);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Great choice! Let's prepare adequately.");
+                        return; // Exit this method and allow them to prepare
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Great choice! Let's prepare adequately.");                    
-                    return; // Exit this method and allow them to prepare
+                    // If they agree to stock up, guide them to the supplies store
+                    Console.Write("Good decision, Captain! Redirecting you to the supplies store...");
+                    Console.ReadKey();
                 }
             }
             else
             {
-                // If they agree to stock up, guide them to the supplies store
-                Console.Write("Good decision, Captain! Redirecting you to the supplies store...");
-               Console.ReadKey();   
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine();
+                PrintCentered("C O N G R A T U L A T I O N S !!!\n");
+                Console.ResetColor();
+                PrintCentered($"Welcome to our launch platform Captain {captainName}, are you ready for your trip from {initialLocation} to {Destination}.");
+                
+                bool proceed = IsValidResponse("\nReady for Launch? ");
+
+                if (!proceed)
+                {
+                    Console.WriteLine("Ok, we will be waiting for when you are ready");
+                    return;
+                }
+                else
+                {
+
+                    Console.WriteLine("B O N  V O Y A G E!!");
+                    StartTrip(start, destinationOption, meetRequirements);
+                }
             }
-
         }
-
 
         /// <summary>
         /// Start the trip to the destination
         /// </summary>
         /// <param name="start"></param>
         /// <param name="destination"></param>
-        static void StartTrip(int start, int destination)
+        static void StartTrip(int start, int destination, bool meetRequirements)
         {
             Console.Clear();
             PrintScreenHeader();
@@ -947,8 +960,14 @@ namespace Space_Adventure_Game
                 "       ."
             };
 
-            AnimateRocketCrashInRealTime(rocketArt);
-
+            if (meetRequirements)
+            {
+                AnimateRocketLaunchToSuccessfulTrip(rocketArt);
+            }
+            else
+            {
+                AnimateRocketCrashInRealTime(rocketArt);
+            }
 
         }
 
@@ -1002,11 +1021,14 @@ namespace Space_Adventure_Game
             Console.SetCursorPosition(left, top);
             PrintCentered("Liftoff! 🚀          ");
             Thread.Sleep(1000);
-
         }
 
 
-        static void AnimateRocketLaunch(string[] rocketArt)
+        /// <summary>
+        /// Simulate a rocket launch animation when ship takes off meeting all requirements
+        /// </summary>
+        /// <param name="rocketArt"></param>
+        static void AnimateRocketLaunchToSuccessfulTrip(string[] rocketArt)
         {
             Console.Clear();
 
@@ -1036,14 +1058,37 @@ namespace Space_Adventure_Game
                 Thread.Sleep(100); // Add delay to simulate smooth animation
             }
 
+            string[] destinationArt = new string[]
+            {
+                "*                 *                  *              *",
+                "                                                      *             *",
+                "                        *            *                             ___",
+                "  *               *                                          |     | |",
+                "        *              _________##                 *        / \\    | |",
+                "                      @\\\\\\\\\\\\\\\\\\##    *     |              |--o|===|-|",
+                "  *                  @@@\\\\\\\\\\\\\\\\##\\       \\|/|/            |---|   |B|",
+                "                    @@ @@\\\\\\\\\\\\\\\\\\\\\\    \\|\\\\|//|/     *   /     \\  |V|",
+                "             *     @@@@@@@\\\\\\\\\\\\\\\\\\\\\\    \\|\\|/|/         |  C    | |C|",
+                "                  @@@@@@@@@----------|    \\\\|//          |  A    |=| |",
+                "       __         @@ @@@ @@__________|     \\|/           |  N    | | |",
+                "  ____|_@|_       @@@@@@@@@__________|     \\|/           |_______| |_|",
+                "=|__ _____ |=     @@@@ .@@@__________|      |             |@| |@|  | |",
+                "____0_____0__\\|/__@@@@__@@@__________|_\\|/__|___\\|/__\\|/___________|_|_"
+            };
+
+
             // After animation, display a final message
             Console.Clear();
             Console.WriteLine("\n\nThe rocket has successfully launched into space! 🚀");
             Thread.Sleep(2000); // Pause to allow the user to see the message
+
+            SuccessfulArrival(destinationArt);
         }
 
-      
-
+        /// <summary>
+        /// Display the rocket centered on the screen
+        /// </summary>
+        /// <param name="rocketArt"></param>
         static void DisplayCenteredRocket(string[] rocketArt)
         {          
             int consoleHeight = Console.WindowHeight; // Total height of the console
@@ -1062,7 +1107,31 @@ namespace Space_Adventure_Game
             }
         }
 
+        static void SuccessfulArrival(string[] destinationArt)
+        {
+            Console.Clear();
+            PrintScreenHeader();
+            Console.WriteLine();
+            PrintCentered("Congratulations Captain, you have successfully arrived at your destination!\n");
+            Console.WriteLine();
 
+            
+            PrintCentered("G A M E  O V E R");
+
+            foreach (string line in destinationArt)
+            {
+                Console.WriteLine(line);
+            }
+
+            Console.WriteLine("\nPress any key to continue . . .");
+            Console.ReadKey();
+            QuitGame();
+        }
+
+        /// <summary>
+        /// Simulate a rocket crash animation when ship takes off without enough resources
+        /// </summary>
+        /// <param name="rocketArt"></param>
         static void AnimateRocketCrashInRealTime(string[] rocketArt)
         {
             Console.Clear();
@@ -1162,9 +1231,11 @@ namespace Space_Adventure_Game
                     //    Console.WriteLine(line);
                     //}
                     AnimateReaperMovingRight(reaperArt);
+
+                    PrintScreenHeader();
                     Console.WriteLine("\n\nThe rocket has broken apart, due to the  lack of resources Captain Manuel and the rest of the crew are lost!!!!!!. Press any key to continue...");
                     Console.ReadKey();
-                    return;
+                    QuitGame();
                 }
             }
         }
@@ -1209,14 +1280,7 @@ namespace Space_Adventure_Game
             }
 
             Console.Clear(); // Clear the screen after the reaper disappears
-            Console.WriteLine("The reaper has vanished into the void...");
         }
-
-
-
-
-
-
 
         #endregion
 
@@ -1286,6 +1350,11 @@ namespace Space_Adventure_Game
             return option;
         }
 
+        /// <summary>
+        /// Evaluate if the user input is valid
+        /// </summary>
+        /// <param name="prompt"></param>
+        /// <returns></returns>
         static bool IsValidResponse(string prompt)
         {
             while (true)
@@ -1317,6 +1386,11 @@ namespace Space_Adventure_Game
             }
         }
 
+        /// <summary>
+        /// Print text in color
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="color"></param>
         static void PrintColorText(string text, ConsoleColor color)
         {
             Console.ForegroundColor = color; 
@@ -1324,14 +1398,6 @@ namespace Space_Adventure_Game
             Console.ResetColor();
         }
 
-
-
-
         #endregion
-
-
-
-
-
     }
 }
